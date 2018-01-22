@@ -292,8 +292,8 @@ function _datalayer_get_entity_data($entity) {
       $output_data[$datalayer_settings->get('entity_title')] = $label;
     }
     elseif ($entity_info->id() === 'user') {
-      // User entities don't report a label.
-      $output_data[$datalayer_settings->get('entity_title')] = $entity->name->getString();
+      // User entities don't report a label entity key.
+      $output_data[$datalayer_settings->get('entity_title')] = $entity->label();
     }
 
     // Output various entity properties. Allow additions/alterations.
@@ -324,8 +324,10 @@ function _datalayer_get_entity_data($entity) {
 
     // For entities with an owner/author, get the username.
     if ((empty($selected_properties) || array_key_exists('name', $properties))
-      && !isset($output_data['entityName']) && is_object($entity->uid)) {
-      $output_data['entityName'] = $entity->uid->entity->name->getString();
+      && !isset($output_data['entityName']) && is_object($entity->uid)
+      && $entity->uid->entity
+      && $entity->uid->entity instanceof EntityInterface) {
+      $output_data['entityName'] = $entity->uid->entity->label();
     }
 
     // Output group name.
@@ -383,7 +385,7 @@ function _datalayer_get_entity_data($entity) {
       $selected_vocabs = $vocabs ? array_filter($vocabs) : NULL;
       if ($type == 'taxonomy_term') {
         $output_data['entityTaxonomy'] = [
-          $entity->vid->getString() => [$entity->tid->getString() => $entity->name->getString()],
+          $entity->vid->getString() => [$entity->tid->getString() => $entity->label()],
         ];
       }
       else {
@@ -495,8 +497,8 @@ function _datalayer_get_entity_terms($entity) {
     foreach ($entity->{$field_name}->getValue() as $value) {
       if (isset($value['target_id'])) {
         $term = Term::load($value['target_id']);
-        if (isset($term->tid) && isset($term->name)) {
-          $terms[$term->vid->getString()][$term->tid->getString()] = $term->name->getString();
+        if ($term) {
+          $terms[$term->vid->getString()][(string) $term->tid->getString()] = $term->label();
         }
       }
     }
@@ -558,7 +560,15 @@ function _datalayer_field_get_value($field_item, $field_type) {
   $value = [];
   switch ($field_type) {
     case 'entity_reference':
-      $value = $field_item->getValue() + ['target_name' => $field_item->entity->name->getString()];
+      if (!$field_item->isEmpty()
+        && $field_item->entity instanceof EntityInterface) {
+        $entity = $field_item->entity;
+        $value = [
+          'id' => $entity->id(),
+          'label' => $entity->label(),
+          'bundle' => $entity->bundle(),
+        ];
+      }
       break;
 
     case 'metatag':
