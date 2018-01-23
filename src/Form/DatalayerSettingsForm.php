@@ -4,12 +4,40 @@ namespace Drupal\datalayer\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Extension\ModuleHandler;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\taxonomy\Entity\Vocabulary;
 
 /**
  * Defines a form that configures datalayer module settings.
  */
 class DatalayerSettingsForm extends ConfigFormBase {
+
+  /**
+   * Drupal\Core\Extension\ModuleHandler definition.
+   *
+   * @var ModuleHandler $moduleHandler
+   */
+  protected $moduleHandler;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandler $module_handler) {
+    parent::__construct($config_factory);
+    $this->moduleHandler = $module_handler;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('module_handler')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -46,7 +74,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
       ->set('key_replacements', $this->keyReplacementsToArray($form_state->getValue('key_replacements')))
       ->save();
 
-    if (\Drupal::moduleHandler()->moduleExists('group')) {
+    if ($this->moduleHandler->moduleExists('group')) {
       $config->set('group', $form_state->getValue('group'))
         ->set('group_label', $form_state->getValue('group_label'))
         ->save();
@@ -133,15 +161,26 @@ class DatalayerSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Include enabled field values'),
       '#default_value' => $datalayer_settings->get('output_fields'),
     ];
+
+    $helper = $datalayer_settings->get('lib_helper');
     $form['global']['lib_helper'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Include "data layer helper" library'),
-      '#default_value' => $datalayer_settings->get('lib_helper'),
+      '#default_value' => $helper,
       '#description' => $this->t('Provides the ability to process messages passed to the dataLayer. See: <a href=":helper">data-layer-helper</a> on GitHub.', [
         ':helper' => 'https://github.com/google/data-layer-helper',
       ]),
     ];
-    if (\Drupal::moduleHandler()->moduleExists('group')) {
+
+    $path = '/libraries/data-layer-helper/dist/data-layer-helper.js';
+    if (empty($_POST) && $helper && !file_exists(DRUPAL_ROOT . $path)) {
+      drupal_set_message($this->t('Data Layer Helper Library is enabled but the library is not installed at %filepath. See: <a href=":helper">data-layer-helper</a> on GitHub.', [
+        '%filepath' => $path,
+        ':helper' => 'https://github.com/google/data-layer-helper',
+      ]), 'warning');
+    }
+
+    if ($this->moduleHandler->moduleExists('group')) {
       $form['global']['group'] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Group module support'),
@@ -318,7 +357,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
       '#description' => $this->t('Key for the country of the site.'),
     ];
 
-    if (\Drupal::moduleHandler()->moduleExists('group')) {
+    if ($this->moduleHandler->moduleExists('group')) {
       // Group label.
       $group_label = $datalayer_settings->get('group_label');
       $form['output']['group_label'] = [

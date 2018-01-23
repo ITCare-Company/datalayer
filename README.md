@@ -157,4 +157,4 @@ To do this just check the box on the admin screen. If you want to more about wor
 
 ### Data Layer Helper
 To employ more complex interactions with the data you may want load the [data-layer-helper](https://github.com/google/data-layer-helper) library. It provides the ability to "process messages passed onto a dataLayer queue," meaning listen to data provided to the data layer dynamicly.
-To use, add the compiled source to the standard Drupal location of `sites/all/libraries/data-layer-helper/data-layer-helper.js` and check the box on the admin page to include it.
+To use, add the compiled source to the standard Drupal location of `libraries/data-layer-helper/dist/data-layer-helper.js` and check the box on the admin page to include it.
