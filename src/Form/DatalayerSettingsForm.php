@@ -17,7 +17,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
   /**
    * Drupal\Core\Extension\ModuleHandler definition.
    *
-   * @var ModuleHandler $moduleHandler
+   * @var Drupal\Core\Extension\ModuleHandler
    */
   protected $moduleHandler;
 
