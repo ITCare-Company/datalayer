@@ -132,20 +132,32 @@ function datalayer_page_attachments(array &$attachments) {
 /**
  * Collects up meta data for output.
  *
+ * @param string $type
+ *   Entity type to collect meta from, defaults to generic.
+ *
  * @return array
  *   Array of all candidate entity properties.
  */
-function _datalayer_collect_meta_properties() {
+function _datalayer_collect_meta_properties($type = '') {
+  $hooks = [];
+  if (is_string($type) && !empty($type)) {
+    $hooks[] = "datalayer_{$type}_meta";
+  }
+  $hooks[] = 'datalayer_meta';
   // Avoid duplicate builds.
-  $properties = &drupal_static(__FUNCTION__);
+  $properties = &drupal_static(__FUNCTION__ . $type);
   if (!isset($properties)) {
-
     $properties = [];
-    foreach (\Drupal::moduleHandler()->getImplementations('datalayer_meta') as $module) {
-      // Call modules implementing datalayer_meta() and combine results.
-      $properties = array_merge($properties, \Drupal::moduleHandler()->invoke($module, 'datalayer_meta'));
+    foreach ($hooks as $hook) {
+      foreach (\Drupal::moduleHandler()->getImplementations($hook) as $module) {
+        // Call modules implementing datalayer_meta() and combine results.
+        $properties = array_merge($properties, \Drupal::moduleHandler()->invoke($module, $hook));
+      }
+      if (!empty($properties)) {
+        break;
+      }
     }
-    \Drupal::moduleHandler()->alter('datalayer_meta', $properties);
+    \Drupal::moduleHandler()->alter($hooks, $properties);
   }
 
   return $properties;
@@ -164,7 +176,21 @@ function datalayer_datalayer_meta() {
     'uid',
     'created',
     'status',
+  ];
+}
+
+/**
+ * Implements hook_datalayer_current_user_meta().
+ *
+ * Defines current user meta data.
+ */
+function datalayer_datalayer_current_user_meta() {
+  return [
+    'name',
+    'mail',
     'roles',
+    'created',
+    'access',
   ];
 }
 
@@ -199,24 +225,28 @@ function datalayer_get_user_data() {
     $roles = $datalayer_settings->get('expose_user_details_roles');
     $exp_user_urls = $datalayer_settings->get('expose_user_details');
     $exp_user_roles = $roles ? array_filter($roles) : [];
-    $matched_roles = array_intersect($user->getRoles(), $exp_user_roles);
+    // If exposed roles are configured, get those. Otherwise, get all roles.
+    $matched_roles = !empty($exp_user_roles) ? array_intersect($user->getRoles(), $exp_user_roles) : $user->getRoles();
     // Honor settings.
-    if ($exp_user_urls && (count($exp_user_roles) == 0 || count($matched_roles))) {
+    if ($exp_user_urls && count($matched_roles)) {
       $path = Url::fromRoute("<current>")->toString();
       $path_matcher = \Drupal::service('path.matcher');
       $alias_manager = \Drupal::service('path.alias_manager');
       $path_alias = $alias_manager->getAliasByPath($path);
       if ($path_matcher->matchPath($path, $exp_user_urls) ||
           $path_matcher->matchPath($path_alias, $exp_user_urls)) {
-        $user_data = [
-          'userName' => $user->getUsername(),
-          'userMail' => $user->getEmail(),
-          'userRoles' => $user->getRoles(),
-          'userCreated' => $user->getCreatedTime(),
-          'userAccess' => $user->getLastAccessedTime(),
-        ];
+        // Output various entity properties. Allow additions/alterations.
+        // NOTE: Properties mean different things on different entity types.
+        $properties = _datalayer_collect_meta_properties('current_user');
+        $user_meta = $datalayer_settings->get('current_user_meta');
+        $selected_properties = _datalayer_get_selected_properties($properties, $user_meta);
+        $user_prefix = 'user';
+        $user_data = _datalayer_collect_meta_values($selected_properties, $user, $user_prefix);
+        if (in_array('roles', $selected_properties)) {
+          $user_data[$user_prefix . 'Roles'] = array_values($matched_roles);
+        }
         if ($datalayer_settings->get('expose_user_details_fields')) {
-          $user_data['userFields'] = _datalayer_get_field_values($user);
+          $user_data[$user_prefix . 'Fields'] = _datalayer_get_field_values($user);
         }
       }
     }
@@ -271,37 +301,10 @@ function _datalayer_get_entity_data($entity) {
 
     // Output various entity properties. Allow additions/alterations.
     // NOTE: Properties mean different things on different entity types.
-    $properties = _datalayer_collect_meta_properties();
-
+    $properties = _datalayer_collect_meta_properties($entity->getEntityTypeId());
     $entity_meta = $datalayer_settings->get('entity_meta');
-    $selected_properties = $entity_meta ? array_filter($entity_meta) : NULL;
-
-    // Build meta output...
-    // Honor selective output configuration.
-    if (empty($selected_properties)) {
-      // Include all in output, only entity valid.
-      foreach ($properties as $p) {
-        if (isset($entity->$p) && method_exists($entity->$p, 'getString')) {
-          $output_data['entity' . ucfirst($p)] = $entity->$p->getString();
-        }
-      }
-    }
-    else {
-      // Include only entity valid and config selected.
-      foreach ($properties as $p) {
-        if (isset($entity->$p) && isset($selected_properties[$p])) {
-          $output_data['entity' . ucfirst($p)] = $entity->$p->getString();
-        }
-      }
-    }
-
-    // For entities with an owner/author, get the username.
-    if ((empty($selected_properties) || array_key_exists('name', $properties))
-      && !isset($output_data['entityName']) && is_object($entity->uid)
-      && $entity->uid->entity
-      && $entity->uid->entity instanceof EntityInterface) {
-      $output_data['entityName'] = $entity->uid->entity->label();
-    }
+    $selected_properties = _datalayer_get_selected_properties($properties, $entity_meta);
+    $output_data = array_merge(_datalayer_collect_meta_values($selected_properties, $entity), $output_data);
 
     // Output group name.
     if ($datalayer_settings->get('group')) {
@@ -603,4 +606,49 @@ function datalayer_get_entity_group(EntityInterface $entity) {
   }
 
   return NULL;
+}
+
+/**
+ * Add the meta properties for given entity.
+ *
+ * @param array $properties
+ *   Selected properties for the entity.
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The entity.
+ * @param string $key_prefix
+ *   The prefix for the property name.
+ */
+function _datalayer_collect_meta_values(array $properties, EntityInterface $entity, $key_prefix = 'entity') {
+  // Build meta output...
+  $meta_data = [];
+  foreach ($properties as $p) {
+    if (isset($entity->$p) && method_exists($entity->$p, 'getString')) {
+      $meta_data[$key_prefix . ucfirst($p)] = $entity->$p->getString();
+    }
+  }
+
+  // For entities with an owner/author, get the username.
+  if (in_array('name', $properties)
+    && !isset($meta_data[$key_prefix . 'Name']) && is_object($entity->uid)
+    && $entity->uid->entity
+    && $entity->uid->entity instanceof EntityInterface) {
+    $meta_data[$key_prefix . 'Name'] = $entity->uid->entity->label();
+  }
+
+  return $meta_data;
+}
+
+/**
+ * Determine which properties will be output based on configuration.
+ *
+ * @param array $properties
+ *   Available properties for the entity.
+ * @param array $selected
+ *   Selected properties for the entity.
+ */
+function _datalayer_get_selected_properties(array $properties, array $selected) {
+  $selected_properties = array_filter($selected);
+  // Honor selective output configuration.
+  $selected_properties = empty($selected_properties) ? $properties : $selected_properties;
+  return $selected_properties;
 }

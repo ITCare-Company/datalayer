@@ -63,6 +63,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
       ->set('vocabs', $form_state->getValue('vocabs'))
       ->set('expose_user_details', $form_state->getValue('expose_user_details'))
       ->set('expose_user_details_roles', $form_state->getValue('expose_user_details_roles'))
+      ->set('current_user_meta', $form_state->getValue('current_user_meta'))
       ->set('expose_user_details_fields', $form_state->getValue('expose_user_details_fields'))
       ->set('entity_title', $form_state->getValue('entity_title'))
       ->set('entity_type', $form_state->getValue('entity_type'))
@@ -288,7 +289,17 @@ class DatalayerSettingsForm extends ConfigFormBase {
       '#multiple' => TRUE,
       '#title' => $this->t('Expose user roles'),
       '#default_value' => $datalayer_settings->get('expose_user_details_roles'),
-      '#description' => $this->t('Roles that should expose active user details to the dataLayer. Leaving empty will expose to all roles.'),
+      '#description' => $this->t('Roles that should expose active user details to the dataLayer. Leaving empty will expose for all roles.'),
+    ];
+
+    // Get available meta data.
+    $current_user_meta_data = _datalayer_collect_meta_properties('current_user');
+    $form['user']['current_user_meta'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Current User Meta Data'),
+      '#default_value' => $datalayer_settings->get('current_user_meta'),
+      '#options' => array_combine($current_user_meta_data, $current_user_meta_data),
+      '#description' => $this->t('The meta data details to ouput for client-side consumption. Marking none will output everything available.'),
     ];
 
     $form['user']['expose_user_details_fields'] = [
