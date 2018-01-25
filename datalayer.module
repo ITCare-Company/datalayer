@@ -170,12 +170,13 @@ function _datalayer_collect_meta_properties($type = '') {
  */
 function datalayer_datalayer_meta() {
   return [
-    'langcode',
-    'vid',
-    'name',
-    'uid',
     'created',
+    'langcode',
+    'name',
     'status',
+    'uid',
+    'uuid',
+    'vid',
   ];
 }
 
@@ -301,7 +302,7 @@ function _datalayer_get_entity_data($entity) {
 
     // Output various entity properties. Allow additions/alterations.
     // NOTE: Properties mean different things on different entity types.
-    $properties = _datalayer_collect_meta_properties($entity->getEntityTypeId());
+    $properties = _datalayer_collect_meta_properties($type);
     $entity_meta = $datalayer_settings->get('entity_meta');
     $selected_properties = _datalayer_get_selected_properties($properties, $entity_meta);
     $output_data = array_merge(_datalayer_collect_meta_values($selected_properties, $entity), $output_data);
@@ -650,5 +651,6 @@ function _datalayer_get_selected_properties(array $properties, array $selected) 
   $selected_properties = array_filter($selected);
   // Honor selective output configuration.
   $selected_properties = empty($selected_properties) ? $properties : $selected_properties;
+
   return $selected_properties;
 }
