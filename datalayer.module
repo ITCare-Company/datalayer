@@ -175,7 +175,6 @@ function datalayer_datalayer_meta() {
     'name',
     'status',
     'uid',
-    'uuid',
     'vid',
   ];
 }
