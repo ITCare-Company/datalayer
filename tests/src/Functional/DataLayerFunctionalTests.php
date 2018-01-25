@@ -42,7 +42,7 @@ class DataLayerFunctionalTests extends BrowserTestBase {
   public function testDataLayerVariableOutputByName() {
     $output = $this->drupalGet('node');
     $assert = $this->assertSession();
-    $assert->pageTextContains('dataLayer = [{');
+    $assert->pageTextContains('window.dataLayer = window.dataLayer || []; window.dataLayer.push({');
   }
 
   /**
