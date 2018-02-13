@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Route;
  *
  * @group DataLayer
  */
-class DataLayerKernelTests extends KernelTestBase {
+class DataLayerKernelTest extends KernelTestBase {
 
   /**
    * Modules to install.
@@ -284,6 +284,7 @@ class DataLayerKernelTests extends KernelTestBase {
       'entityType' => 'node',
       'entityBundle' => 'article',
       'entityId' => '1',
+      'entityUuid' => $this->node->uuid->getString(),
       'entityTitle' => 'My Article',
       'entityLangcode' => 'und',
       'entityVid' => '1',

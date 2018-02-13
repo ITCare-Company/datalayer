@@ -9,7 +9,7 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group DataLayer
  */
-class DataLayerFunctionalTests extends BrowserTestBase {
+class DataLayerFunctionalTest extends BrowserTestBase {
 
   /**
    * Modules to install.
