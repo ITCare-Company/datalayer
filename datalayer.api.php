@@ -79,6 +79,24 @@ function hook_datalayer_alter(array &$data_layer) {
 }
 
 /**
+ * Alter the Data Layer field values before output.
+ *
+ * @param array $value
+ *   Value for the field item being added to the datalayer.
+ * @param \Drupal\Core\Field\FieldItemInterface $field_item
+ *   Individual field item the value is from.
+ * @param string $field_type
+ *   Type of field, such as 'string' or 'entity_refernce'.
+ */
+function hook_datalayer_field_alter(array &$value, \Drupal\Core\Field\FieldItemInterface $field_item, $field_type) {
+  // EXAMPLE:
+  // Remove the filter format for a text with summary field.
+  if ($field_type == 'text_with_summary') {
+    unset($value['format']);
+  }
+}
+
+/**
  * @}
  * End hook documentation.
  */

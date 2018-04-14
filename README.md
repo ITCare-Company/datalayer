@@ -174,6 +174,17 @@ function my_module_datalayer_alter(&$data_layer) {
 }
 ```
 
+### Alter field values
+You can directly alter output for fields that are included in the datalayer with `hook_datalayer_field_alter()`. Use this to add or remove or alter attributes of the value returned by a field item.
+```php
+function my_module_datalayer_field_alter(array &$value, \Drupal\Core\Field\FieldItemInterface $field_item, $field_type) {
+  // Remove the filter format for a text with summary field.
+  if ($field_type == 'text_with_summary') {
+    unset($value['format']);
+  }
+}
+```
+
 ## Use the data layer client-side
 There are lots of great client-side uses for your pages' data. The `dataLayer` object is used as a warehouse for Google Analytics and GTM, and is therefor an array of objects. To safely access properties you should use the <a href="#data-layer-helper">data-layer-helper</a> library, a dependency of this module.
 You might act on this info like this...

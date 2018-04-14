@@ -564,6 +564,9 @@ function _datalayer_field_get_value($field_item, $field_type) {
       break;
   }
 
+  // Allow modules to alter field values hook_datalayer_field_alter().
+  \Drupal::moduleHandler()->alter('datalayer_field', $value, $field_item, $field_type);
+
   return $value;
 }
 
