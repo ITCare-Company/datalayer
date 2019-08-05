@@ -15,23 +15,6 @@ use Drupal\group\Entity\GroupContentType;
 use Drupal\user\Entity\User;
 
 /**
- * Implements hook_menu().
- */
-function datalayer_menu() {
-  $items['admin/config/search/datalayer'] = [
-    'title' => 'Data Layer',
-    'description' => 'Output page meta data for client-side use.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => ['datalayer_settings_form'],
-    'access arguments' => ['administer site configuration'],
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'datalayer.admin.inc',
-  ];
-
-  return $items;
-}
-
-/**
  * Implements hook_form_FORM_ID_alter() for 'field_config_edit_form'.
  */
 function datalayer_form_field_config_form_alter(&$form, FormStateInterface $form_state, $form_id) {
