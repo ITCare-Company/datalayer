@@ -12,11 +12,16 @@ use Drupal\Tests\BrowserTestBase;
 class DataLayerFunctionalTest extends BrowserTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  public $profile = 'testing';
+
+  /**
    * Modules to install.
    *
    * @var array
    */
-  public static $modules = ['node', 'datalayer'];
+  public static $modules = ['node', 'datalayer', 'taxonomy'];
 
   /**
    * {@inheritdoc}
@@ -52,6 +57,23 @@ class DataLayerFunctionalTest extends BrowserTestBase {
     $output = $this->drupalGet('node');
     $assert = $this->assertSession();
     $assert->pageTextContains('"dataLayer":{"defaultLang"');
+  }
+
+  /**
+   * Tests basic admin form functionality.
+   */
+  public function testAdminSettingsForm() {
+    // Check default form field values.
+    $assert = $this->assertSession();
+    $this->drupalGet('admin/config/search/datalayer');
+    $assert->pageTextContains('Include "data layer helper" library');
+    $this->assertNoFieldChecked('lib_helper');
+    $assert->pageTextNotContains('Data Layer Helper Library is enabled but the library is not installed at /libraries/data-layer-helper/dist/data-layer-helper.js. See: data-layer-helper on GitHub.');
+
+    // Update form field to ensure config value changes.
+    $this->drupalPostForm(NULL, ['lib_helper' => '1'], 'Save configuration');
+    $this->assertFieldChecked('lib_helper');
+    $assert->pageTextContains('Data Layer Helper Library is enabled but the library is not installed at /libraries/data-layer-helper/dist/data-layer-helper.js. See: data-layer-helper on GitHub.');
   }
 
 }

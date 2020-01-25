@@ -174,7 +174,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     ];
 
     $path = '/libraries/data-layer-helper/dist/data-layer-helper.js';
-    if (empty($_POST) && $helper && !file_exists(DRUPAL_ROOT . $path)) {
+    if ($helper && !file_exists(DRUPAL_ROOT . $path)) {
       $this->messenger()->addWarning($this->t('Data Layer Helper Library is enabled but the library is not installed at %filepath. See: <a href=":helper">data-layer-helper</a> on GitHub.', [
         '%filepath' => $path,
         ':helper' => 'https://github.com/google/data-layer-helper',
