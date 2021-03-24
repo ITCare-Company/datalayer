@@ -69,26 +69,36 @@ function datalayer_field_config_submit(array &$form, FormStateInterface $form_st
 
 /**
  * Add data for output.
+ *
+ * This can be an expensive function whose result is not being modified.
+ * Adding static cache.
+ *
+ * @param bool $reset
+ *   Boolean indicating whether the static cache should be cleared or not.
  */
-function datalayer_get_data_from_page() {
-  $datalayer_settings = \Drupal::config('datalayer.settings');
-  $user = \Drupal::currentUser();
+function datalayer_get_data_from_page($reset = FALSE) {
+  $datalayer = &drupal_static(__FUNCTION__);
 
-  // Add details about the page entity.
-  if ($datalayer_settings->get('add_page_meta')) {
-    datalayer_add(datalayer_get_page_data());
+  if (!$datalayer || $reset) {
+    $datalayer_settings = \Drupal::config('datalayer.settings');
+    $user = \Drupal::currentUser();
+
+    // Add details about the page entity.
+    if ($datalayer_settings->get('add_page_meta')) {
+      datalayer_add(datalayer_get_page_data());
+    }
+
+    // Expose user details.
+    if ($datalayer_settings->get('expose_user_details')) {
+      datalayer_add(datalayer_get_user_data());
+    }
+
+    // Always output active uid.
+    $datalayer = datalayer_add(['userUid' => $user->id()]);
+
+    // Allow modules to alter data with hook_datalayer_alter().
+    \Drupal::moduleHandler()->alter('datalayer', $datalayer);
   }
-
-  // Expose user details.
-  if ($datalayer_settings->get('expose_user_details')) {
-    datalayer_add(datalayer_get_user_data());
-  }
-
-  // Always output active uid.
-  $datalayer = datalayer_add(['userUid' => $user->id()]);
-
-  // Allow modules to alter data with hook_datalayer_alter().
-  \Drupal::moduleHandler()->alter('datalayer', $datalayer);
 
   return $datalayer;
 }
