@@ -2,12 +2,12 @@
 
 namespace Drupal\datalayer\Form;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandler;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\taxonomy\Entity\Vocabulary;
 
 /**
  * Defines a form that configures datalayer module settings.
@@ -22,11 +22,19 @@ class DatalayerSettingsForm extends ConfigFormBase {
   protected $moduleHandler;
 
   /**
+   * Entity type manager service.
+   *
+   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandler $module_handler) {
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandler $module_handler, EntityTypeManagerInterface $entity_type_manager) {
     parent::__construct($config_factory);
     $this->moduleHandler = $module_handler;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -35,7 +43,8 @@ class DatalayerSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('module_handler')
+      $container->get('module_handler'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -125,7 +134,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Setup vocabs.
-    $vocabs = Vocabulary::loadMultiple();
+    $vocabs = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
     $v_options = [];
     foreach ($vocabs as $v) {
       $v_options[$v->id()] = $v->label();
@@ -226,7 +235,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['ia']['ia_depth'] = [
       '#type' => 'number',
       '#title' => $this->t('Depth of paths'),
-      '#default_value' => isset($ia_depth) ? $ia_depth : '3',
+      '#default_value' => $ia_depth ?? '3',
       '#description' => $this->t('Define how many url path components get output in dataLayer.'),
     ];
 
@@ -234,7 +243,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['ia']['ia_category_primary'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Depth of paths'),
-      '#default_value' => isset($ia_cat_primary) ? $ia_cat_primary : 'primaryCategory',
+      '#default_value' => $ia_cat_primary ?? 'primaryCategory',
       '#description' => $this->t('Define the key for the primary path component.'),
     ];
 
@@ -242,7 +251,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['ia']['ia_category_sub'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Depth of paths'),
-      '#default_value' => isset($iacatSub) ? $iacatSub : 'subCategory',
+      '#default_value' => $iacatSub ?? 'subCategory',
       '#description' => $this->t('Define the key for sub-components (this value will get appended with numerical identifier).'),
     ];
 
@@ -319,7 +328,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['entity_title'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Entity title'),
-      '#default_value' => isset($entity_title) ? $entity_title : 'entityTitle',
+      '#default_value' => $entity_title ?? 'entityTitle',
       '#description' => $this->t('Key for the title of an entity, e.g. node title, taxonomy term name, or username.'),
     ];
 
@@ -328,7 +337,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['entity_type'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Entity type'),
-      '#default_value' => isset($entity_type) ? $entity_type : 'entityType',
+      '#default_value' => $entity_type ?? 'entityType',
       '#description' => $this->t('Key for the type of an entity, e.g. node, user, or taxonomy_term.'),
     ];
 
@@ -337,7 +346,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['entity_bundle'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Entity bundle'),
-      '#default_value' => isset($entity_bundle) ? $entity_bundle : 'entityBundle',
+      '#default_value' => $entity_bundle ?? 'entityBundle',
       '#description' => $this->t('Key for the bundle of an entity, e.g. page, my_things.'),
     ];
 
@@ -346,7 +355,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['entity_identifier'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Entity identifier'),
-      '#default_value' => isset($entity_id) ? $entity_id : 'entityIdentifier',
+      '#default_value' => $entity_id ?? 'entityIdentifier',
       '#description' => $this->t('Key for the identifier of an entity, e.g. nid, uid, or tid.'),
     ];
 
@@ -355,7 +364,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['drupal_language'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Drupal language'),
-      '#default_value' => isset($drupal_lang) ? $drupal_lang : 'drupalLanguage',
+      '#default_value' => $drupal_lang ?? 'drupalLanguage',
       '#description' => $this->t('Key for the language of the site.'),
     ];
 
@@ -364,7 +373,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['drupal_country'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Drupal country'),
-      '#default_value' => isset($drupal_country) ? $drupal_country : 'drupalCountry',
+      '#default_value' => $drupal_country ?? 'drupalCountry',
       '#description' => $this->t('Key for the country of the site.'),
     ];
 
@@ -374,7 +383,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
       $form['output']['group_label'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Group key'),
-        '#default_value' => isset($group_label) ? $group_label : 'groupKey',
+        '#default_value' => $group_label ?? 'groupKey',
         '#description' => $this->t('Key for the group.'),
       ];
     }
@@ -384,7 +393,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $form['output']['site_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Drupal site name'),
-      '#default_value' => isset($drupal_sitename) ? $drupal_sitename : 'drupalSitename',
+      '#default_value' => $drupal_sitename ?? 'drupalSitename',
       '#description' => $this->t('Key for the site name value.'),
     ];
 

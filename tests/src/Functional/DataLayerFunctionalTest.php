@@ -39,7 +39,6 @@ class DataLayerFunctionalTest extends BrowserTestBase {
       'administer site configuration',
     ]);
     $this->drupalLogin($admin_user);
-
   }
 
   /**
@@ -50,18 +49,18 @@ class DataLayerFunctionalTest extends BrowserTestBase {
    * @see https://www.drupal.org/node/2300577
    */
   public function testDataLayerVariableOutputByName() {
-    $output = $this->drupalGet('node');
+    $this->drupalGet('user');
     $assert = $this->assertSession();
-    $assert->pageTextContains('window.dataLayer = window.dataLayer || []; window.dataLayer.push({');
+    $assert->responseContains('window.dataLayer = window.dataLayer || []; window.dataLayer.push({');
   }
 
   /**
    * Test DataLayer JS language settings.
    */
   public function testDataLayerJsLanguageSettings() {
-    $output = $this->drupalGet('node');
+    $this->drupalGet('node');
     $assert = $this->assertSession();
-    $assert->pageTextContains('"dataLayer":{"defaultLang"');
+    $assert->responseContains('"dataLayer":{"defaultLang"');
   }
 
   /**
@@ -72,12 +71,13 @@ class DataLayerFunctionalTest extends BrowserTestBase {
     $assert = $this->assertSession();
     $this->drupalGet('admin/config/search/datalayer');
     $assert->pageTextContains('Include "data layer helper" library');
-    $this->assertNoFieldChecked('lib_helper');
+    $assert->checkboxNotChecked('lib_helper');
     $assert->pageTextNotContains('Data Layer Helper Library is enabled but the library is not installed at /libraries/data-layer-helper/dist/data-layer-helper.js. See: data-layer-helper on GitHub.');
 
     // Update form field to ensure config value changes.
-    $this->drupalPostForm(NULL, ['lib_helper' => '1'], 'Save configuration');
-    $this->assertFieldChecked('lib_helper');
+    $this->submitForm(['lib_helper' => '1'], 'Save configuration');
+    $assert = $this->assertSession();
+    $assert->checkboxChecked('lib_helper');
     $assert->pageTextContains('Data Layer Helper Library is enabled but the library is not installed at /libraries/data-layer-helper/dist/data-layer-helper.js. See: data-layer-helper on GitHub.');
   }
 

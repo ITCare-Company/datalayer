@@ -215,6 +215,7 @@ class DataLayerKernelTest extends KernelTestBase {
    * Setup empty datalayer.
    */
   public function setupEmptyDataLayer() {
+    // phpcs:ignore DrupalPractice.CodeAnalysis.VariableAnalysis.UnusedVariable
     $data = &drupal_static('datalayer_add', []);
   }
 

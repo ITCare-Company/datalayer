@@ -533,7 +533,7 @@ function _datalayer_field_get_value($field_item, $field_type) {
 
     case 'metatag':
       $field = $field_item->getValue();
-      $values = unserialize($field['value']);
+      $values = unserialize($field['value'], ['allowed_classes' => FALSE]);
       foreach ($values as $key => $thisvalue) {
         $value[$key] = $thisvalue;
       }
