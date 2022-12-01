@@ -33,6 +33,31 @@ function datalayer_form_field_config_form_alter(&$form, FormStateInterface $form
       '#description' => t('Enter the label you would like in the datalayer output.'),
     ];
   }
+
+  $form['actions']['submit']['#submit'][] =  'datalayer_field_config_submit';
+}
+
+/**
+ * Submit callback for field_config_form.
+ *
+ * If the datalayer configuration to expose the field's data is disabled we
+ * should remove any previously set third party settings.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The $form_state object.
+ */
+function datalayer_field_config_submit(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\field\Entity\FieldConfig $field */
+  $field = $form_state->getFormObject()->getEntity();
+  if (empty($field->getThirdPartySetting('datalayer', 'expose'))) {
+    $settings = $field->getThirdPartySettings('datalayer');
+    foreach ($settings as $key => $value) {
+      $field->unsetThirdPartySetting('datalayer', $key);
+    }
+    $field->save();
+  }
 }
 
 /**

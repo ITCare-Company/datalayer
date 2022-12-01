@@ -1,0 +1,30 @@
+<?php
+/**
+ * @file
+ * datalyer.install
+ */
+
+/**
+ * Remove 3rd party settings from any field that doesn't need them.
+ */
+function datalayer_update_8001(&$sandbox) {
+  if (!$fields = \Drupal::entityTypeManager()->getStorage('field_config')->loadMultiple()) {
+    return;
+  }
+
+
+  // Existing fields may already have had 3rd party settings added, even if
+  // they are not needed, because the module didn't initially clean up if the
+  // expose setting was disabled. So this cleans up any existing field config
+  // that may have this unnecessary data.
+  /** @var \Drupal\field\FieldConfigInterface $field */
+  foreach ($fields as $field) {
+    if (empty($field->getThirdPartySetting('datalayer', 'expose'))) {
+      $settings = $field->getThirdPartySettings('datalayer');
+      foreach ($settings as $key => $value) {
+        $field->unsetThirdPartySetting('datalayer', $key);
+      }
+      $field->save();
+    }
+  }
+}
