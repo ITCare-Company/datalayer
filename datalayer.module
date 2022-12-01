@@ -432,7 +432,7 @@ function datalayer_add(array $data = [], $overwrite = FALSE) {
 function _datalayer_defaults() {
   $datalayer_settings = \Drupal::config('datalayer.settings');
 
-  $language = \Drupal::languageManager()->getDefaultLanguage();
+  $language = \Drupal::languageManager()->getCurrentLanguage();
   $site_config = \Drupal::config('system.date');
   $site_name = \Drupal::config('system.site');
   return [
