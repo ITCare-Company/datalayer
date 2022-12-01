@@ -9,7 +9,6 @@ use Drupal\Core\Url;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Entity\Term;
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\group\Entity\GroupContentType;
 use Drupal\user\Entity\User;
@@ -80,7 +79,10 @@ function datalayer_page_attachments(array &$attachments) {
     [
       '#type' => 'html_tag',
       '#tag' => 'script',
-      '#value' => 'window.dataLayer = window.dataLayer || []; window.dataLayer.push(' . Json::encode($datalayer_attachment) . ');',
+      // Use json_encode() instead of
+      // Drupal\Component\Serialization\Json::encode() because we want to pass
+      // the additional JSON_UNESCAPED_UNICODE flag.
+      '#value' => 'window.dataLayer = window.dataLayer || []; window.dataLayer.push(' . json_encode($datalayer_attachment, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) . ');',
     ],
     'datalayers-js',
   ];
