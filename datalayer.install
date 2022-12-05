@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * datalyer.install
+ * Install, update and uninstall functions for the datalayer module.
  */
 
 /**
@@ -11,7 +12,6 @@ function datalayer_update_8001(&$sandbox) {
   if (!$fields = \Drupal::entityTypeManager()->getStorage('field_config')->loadMultiple()) {
     return;
   }
-
 
   // Existing fields may already have had 3rd party settings added, even if
   // they are not needed, because the module didn't initially clean up if the

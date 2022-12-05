@@ -34,7 +34,7 @@ function datalayer_form_field_config_form_alter(&$form, FormStateInterface $form
     ];
   }
 
-  $form['actions']['submit']['#submit'][] =  'datalayer_field_config_submit';
+  $form['actions']['submit']['#submit'][] = 'datalayer_field_config_submit';
 }
 
 /**

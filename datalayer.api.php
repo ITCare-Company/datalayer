@@ -9,7 +9,7 @@
  * Drupal manner.
  */
 
-use \Drupal\Core\Field\FieldItemInterface;
+use Drupal\Core\Field\FieldItemInterface;
 
 /**
  * @defgroup datalayer_hooks Data Layer hooks

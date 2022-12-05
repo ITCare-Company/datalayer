@@ -61,7 +61,6 @@ class DatalayerSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('datalayer.settings');
     $config->set('add_page_meta', $form_state->getValue('add_page_meta'))
-      ->set('output_terms', $form_state->getValue('output_terms'))
       ->set('output_fields', $form_state->getValue('output_fields'))
       ->set('lib_helper', $form_state->getValue('lib_helper'))
       ->set('entity_meta', $form_state->getValue('global_entity_meta'))
@@ -69,7 +68,6 @@ class DatalayerSettingsForm extends ConfigFormBase {
       ->set('ia_depth', $form_state->getValue('ia_depth'))
       ->set('ia_category_primary', $form_state->getValue('ia_category_primary'))
       ->set('ia_category_sub', $form_state->getValue('ia_category_sub'))
-      ->set('vocabs', $form_state->getValue('vocabs'))
       ->set('expose_user_details', $form_state->getValue('expose_user_details'))
       ->set('expose_user_details_roles', $form_state->getValue('expose_user_details_roles'))
       ->set('current_user_meta', $form_state->getValue('current_user_meta'))
@@ -83,6 +81,12 @@ class DatalayerSettingsForm extends ConfigFormBase {
       ->set('site_name', $form_state->getValue('site_name'))
       ->set('key_replacements', $this->keyReplacementsToArray($form_state->getValue('key_replacements')))
       ->save();
+
+    if ($this->moduleHandler->moduleExists('taxonomy')) {
+      $config->set('output_terms', $form_state->getValue('output_terms'))
+        ->set('vocabs', $form_state->getValue('vocabs'))
+        ->save();
+    }
 
     if ($this->moduleHandler->moduleExists('group')) {
       $config->set('group', $form_state->getValue('group'))
@@ -133,12 +137,6 @@ class DatalayerSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    // Setup vocabs.
-    $vocabs = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
-    $v_options = [];
-    foreach ($vocabs as $v) {
-      $v_options[$v->id()] = $v->label();
-    }
     $datalayer_settings = $this->config('datalayer.settings');
 
     // Get available meta data.
@@ -153,18 +151,22 @@ class DatalayerSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Add entity meta data to pages'),
       '#default_value' => $datalayer_settings->get('add_page_meta'),
     ];
-    $form['global']['output_terms'] = [
-      '#type' => 'checkbox',
-      '#states' => [
-        'enabled' => [
-          ':input[name="add_page_meta"]' => [
-            'checked' => TRUE,
+
+    if ($this->moduleHandler->moduleExists('taxonomy')) {
+      $form['global']['output_terms'] = [
+        '#type' => 'checkbox',
+        '#states' => [
+          'enabled' => [
+            ':input[name="add_page_meta"]' => [
+              'checked' => TRUE,
+            ],
           ],
         ],
-      ],
-      '#title' => $this->t('Include taxonomy terms'),
-      '#default_value' => $datalayer_settings->get('output_terms'),
-    ];
+        '#title' => $this->t('Include taxonomy terms'),
+        '#default_value' => $datalayer_settings->get('output_terms'),
+      ];
+    }
+
     $form['global']['output_fields'] = [
       '#type' => 'checkbox',
       '#description' => $this->t('Exposes a checkbox on field settings forms to expose data.'),
@@ -255,24 +257,34 @@ class DatalayerSettingsForm extends ConfigFormBase {
       '#description' => $this->t('Define the key for sub-components (this value will get appended with numerical identifier).'),
     ];
 
-    $form['vocabs'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Taxonomy'),
-      '#description' => $this->t('The vocabularies which should be output within page meta data. Marking none will output everything available.'),
-    ];
-    $form['vocabs']['vocabs'] = [
-      '#type' => 'checkboxes',
-      '#states' => [
-        'enabled' => [
-          ':input[name="output_terms"]' => [
-            'checked' => TRUE,
+    if ($this->moduleHandler->moduleExists('taxonomy')) {
+      $vocabs = $this->entityTypeManager
+        ->getStorage('taxonomy_vocabulary')
+        ->loadMultiple();
+      $v_options = [];
+      foreach ($vocabs as $v) {
+        $v_options[$v->id()] = $v->label();
+      }
+
+      $form['vocabs'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Taxonomy'),
+        '#description' => $this->t('The vocabularies which should be output within page meta data. Marking none will output everything available.'),
+      ];
+      $form['vocabs']['vocabs'] = [
+        '#type' => 'checkboxes',
+        '#states' => [
+          'enabled' => [
+            ':input[name="output_terms"]' => [
+              'checked' => TRUE,
+            ],
           ],
         ],
-      ],
-      '#title' => '',
-      '#default_value' => $datalayer_settings->get('vocabs'),
-      '#options' => $v_options,
-    ];
+        '#title' => '',
+        '#default_value' => $datalayer_settings->get('vocabs'),
+        '#options' => $v_options,
+      ];
+    }
 
     $form['user'] = [
       '#type' => 'details',
