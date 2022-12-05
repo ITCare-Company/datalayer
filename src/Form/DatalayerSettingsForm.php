@@ -52,7 +52,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'settings_form';
+    return 'datalayer_settings_form';
   }
 
   /**
