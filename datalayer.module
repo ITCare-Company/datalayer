@@ -117,24 +117,15 @@ function datalayer_page_attachments(array &$attachments) {
       // Drupal\Component\Serialization\Json::encode() because we want to pass
       // the additional JSON_UNESCAPED_UNICODE flag.
       '#value' => 'window.dataLayer = window.dataLayer || []; window.dataLayer.push(' . json_encode($datalayer_attachment, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) . ');',
-      '#cache' => [
-        'max-age' => 0,
-        'contexts' => [
-          // The "current user" is used above, which depends on the request,
-          // so we tell Drupal to vary by the 'user' cache context.
-          'session',
-          'url'
-        ],
-      ]
     ],
     'datalayers-js',
   ];
 
   // If we're exposing user data make sure that context is added to the
-  // cacability for the page.
-  if ($datalayer_settings->get('expose_user_details')) {
-    $attachments['#cache']['contexts'][] = 'user';
-  }
+  // cachability for the page. And, we add this regardless of configuration
+  // becasue in datalayer_get_data_from_page() we always add userUid no matter
+  // what.
+  $attachments['#cache']['contexts'][] = 'user';
 
   // Include data-layer-helper library.
   if ($datalayer_settings->get('lib_helper')) {
