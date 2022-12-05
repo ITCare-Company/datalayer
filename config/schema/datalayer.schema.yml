@@ -89,3 +89,15 @@ datalayer.settings:
       sequence:
         type: string
         label: 'Replacement'
+
+# Settings for datalayer module attached to each field instance.
+field.field.*.*.*.third_party.datalayer:
+  type: mapping
+  label: 'Extra settings for datalayer'
+  mapping:
+    expose:
+      type: integer
+      label: 'Expose'
+    label:
+      type: string
+      label: 'Label'
