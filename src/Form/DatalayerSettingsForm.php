@@ -62,6 +62,7 @@ class DatalayerSettingsForm extends ConfigFormBase {
     $config = $this->config('datalayer.settings');
     $config->set('add_page_meta', $form_state->getValue('add_page_meta'))
       ->set('output_fields', $form_state->getValue('output_fields'))
+      ->set('remove_from_admin_routes', $form_state->getValue('remove_from_admin_routes'))
       ->set('lib_helper', $form_state->getValue('lib_helper'))
       ->set('entity_meta', $form_state->getValue('global_entity_meta'))
       ->set('enable_ia', $form_state->getValue('enable_ia'))
@@ -172,6 +173,13 @@ class DatalayerSettingsForm extends ConfigFormBase {
       '#description' => $this->t('Exposes a checkbox on field settings forms to expose data.'),
       '#title' => $this->t('Include enabled field values'),
       '#default_value' => $datalayer_settings->get('output_fields'),
+    ];
+
+    $form['global']['remove_from_admin_routes'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Remove dataLayer from admin routes'),
+      '#description' => $this->t('If enabled the dataLayer object will not be included admin routes.'),
+      '#default_value' => $datalayer_settings->get('remove_from_admin_routes'),
     ];
 
     $helper = $datalayer_settings->get('lib_helper');

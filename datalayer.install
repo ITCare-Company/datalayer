@@ -51,3 +51,12 @@ function datalayer_update_8001(&$sandbox) {
     }
   }
 }
+
+/**
+ * Default the new remove_from_admin_routes setting to false for existing users.
+ */
+function datalayer_update_8002(&$sandbox) {
+  $datalayer_settings = \Drupal::configFactory()->getEditable('datalayer.settings');
+  $datalayer_settings->set('remove_from_admin_routes', FALSE)
+    ->save();
+}

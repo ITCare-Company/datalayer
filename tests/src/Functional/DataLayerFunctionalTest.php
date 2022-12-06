@@ -116,4 +116,29 @@ class DataLayerFunctionalTest extends BrowserTestBase {
     $assert->responseContains('"userUid":"' . $user2->id() . '"');
   }
 
+  /**
+   * Test the 'remove_from_admin_routes' setting.
+   */
+  public function testAdminRouteSetting() {
+    // Expose datalayer on admin routes.
+    $this->config('datalayer.settings')
+      ->set('remove_from_admin_routes', FALSE)
+      ->save();
+
+    $this->drupalGet('/admin');
+    $this->assertSession()->responseContains('"dataLayer":{"defaultLang"');
+
+    // Disable datalayer on admin routes.
+    $this->config('datalayer.settings')
+      ->set('remove_from_admin_routes', TRUE)
+      ->save();
+
+    $this->drupalGet('/admin');
+    $this->assertSession()->responseNotContains('"dataLayer":{"defaultLang"');
+
+    // Still appears on non-admin routes.
+    $this->drupalGet('');
+    $this->assertSession()->responseContains('"dataLayer":{"defaultLang"');
+  }
+
 }

@@ -101,6 +101,11 @@ function datalayer_get_data_from_page() {
 function datalayer_page_attachments(array &$attachments) {
   $datalayer_settings = \Drupal::config('datalayer.settings');
 
+  // Optionally do not run dataLayer code on admin pages.
+  if (\Drupal::service('router.admin_context')->isAdminRoute() && $datalayer_settings->get('remove_from_admin_routes') === TRUE) {
+    return;
+  }
+
   if (empty($attachments['#attached'])) {
     $attachments['#attached'] = [];
   }
