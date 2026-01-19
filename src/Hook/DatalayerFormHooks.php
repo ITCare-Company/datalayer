@@ -58,7 +58,7 @@ class DatalayerFormHooks {
         ],
       ];
     }
-    $form['actions']['submit']['#submit'][] = ['datalayer_field_config_submit'];
+    $form['actions']['submit']['#submit'][] = 'datalayer_field_config_submit';
   }
 
 }
